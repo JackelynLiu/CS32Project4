@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <istream>
+#include <fstream>
 using namespace std;
 
 class GenomeImpl
@@ -14,31 +15,76 @@ public:
 	string name() const;
 	bool extract(int position, int length, string& fragment) const;
 private:
+	string m_name, m_sequence;
 };
 
 GenomeImpl::GenomeImpl(const string& nm, const string& sequence)
-{
-	// This compiles, but may not be correct
-}
+	:m_name(nm), m_sequence(sequence)
+{}
 
 bool GenomeImpl::load(istream& genomeSource, vector<Genome>& genomes)
 {
-	return false;  // This compiles, but may not be correct
+	string name, sequence, line;
+	while (getline(genomeSource, line))
+	{
+		if (line[0] == '>')
+		{
+			if (name.size() != 0 && sequence.size() != 0)
+			{
+				genomes.push_back(Genome(name, sequence));
+				name, sequence = "";
+			}
+			if (line[1] == ' ' || line[1] == '\n') return false;
+			for (int i=1;i != '\n';i++)
+				name += line[i];
+		}
+		else
+		{
+			for (int i = 0; i != line.size(); i++)
+			{
+				char n = line[i];
+				switch (n)
+				{
+				case 'A':
+				case 'C':
+				case 'T':
+				case 'G':
+				case 'N':
+					sequence += line[i];
+					break;
+				default:
+					return false;
+				}
+			}
+		}
+	}
+
+	if (name.size() != 0 && sequence.size() != 0)
+	{
+		genomes.push_back(Genome(name, sequence));
+		name, sequence = "";
+	}
+	return true;
 }
 
 int GenomeImpl::length() const
 {
-	return 0;  // This compiles, but may not be correct
+	return m_sequence.length();
 }
 
 string GenomeImpl::name() const
 {
-	return "";  // This compiles, but may not be correct
+	return m_name;
 }
 
 bool GenomeImpl::extract(int position, int length, string& fragment) const
 {
-	return false;  // This compiles, but may not be correct
+	if (m_sequence.size() - position < length) return false;
+	else
+	{
+		fragment = m_sequence.substr(position, length);
+		return true;
+	}
 }
 
 //******************** Genome functions ************************************
