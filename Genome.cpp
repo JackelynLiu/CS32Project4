@@ -32,7 +32,8 @@ bool GenomeImpl::load(istream& genomeSource, vector<Genome>& genomes)
 			if (name.size() != 0 && sequence.size() != 0)
 			{
 				genomes.push_back(Genome(name, sequence));
-				name, sequence = "";
+				name = "";
+				sequence = "";
 			}
 			if (line[1] == ' ' || line[1] == '\n') return false;
 			for (int i=1;i != '\n';i++)
