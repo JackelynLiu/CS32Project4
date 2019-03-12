@@ -27,11 +27,11 @@ GenomeMatcherImpl::GenomeMatcherImpl(int minSearchLength)
 void GenomeMatcherImpl::addGenome(const Genome& genome)
 {
 	m_genomes.push_back(genome);
-	for (int i = 0; i < genome.length() - m_minsearchlength; i++)
+	for (int i = 0; i < genome.length() - m_minsearchlength + 1; i++)
 	{
 		string s;
 		if(genome.extract(i, m_minsearchlength, s))
-			m_trieofDNA.insert(s, genome.name() + ", position " + to_string(i));
+			m_trieofDNA.insert(s, "(" + genome.name() + ", position " + to_string(i) + ")");
 	}
 }
 
