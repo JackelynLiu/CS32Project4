@@ -29,6 +29,7 @@ private:
 	};
 	Node* root;
 	void findhelper(const std::string& key, bool exactMatchOnly, Node* current, std::vector<ValueType>& result) const;
+	void clear(Node* current);
 };
 
 template<typename ValueType>
@@ -40,13 +41,25 @@ Trie<ValueType>::Trie()
 template<typename ValueType>
 Trie<ValueType>::~Trie()
 {
-
+	clear(root);
 }
 
 template<typename ValueType>
 void Trie<ValueType>::reset()
 {
+	clear(root);
+	root = new Node(' ');
+}
 
+template<typename ValueType>
+void Trie<ValueType>::clear(Node* current)
+{
+	if (current == nullptr) return;
+	for (int i = current->children.size()-1; i != -1; i--)
+	{
+		clear(current->children[i]);
+	}
+	delete current;
 }
 
 template<typename ValueType>
