@@ -99,24 +99,18 @@ void Trie<ValueType>::findhelper(const std::string& key, bool exactMatchOnly, No
 		return;
 	}
 	
-	Node* cur = current;
 	int currentvec_size = current->children.size();
 	int v = 0;
 	for (; v < currentvec_size; v++)
 	{
+		if (key[0] != current->children[v]->label)
+		{
+			if (!exactMatchOnly)
+				findhelper(key.substr(1), true, current->children[v], result);
+			else return;
+		}
 		if (key[0] == current->children[v]->label)
-			break;
-	}
-	if (v == currentvec_size)			//does not find the letter
-	{
-		if (exactMatchOnly)
-			return;
-		else findhelper(key.substr(1), true, current->children[v], result);
-	}
-	else
-	{								//finds the letter
-		if (exactMatchOnly)
-			findhelper(key.substr(1), true, current->children[v], result);
+			findhelper(key.substr(1), exactMatchOnly, current->children[v], result);
 	}
 }
 
