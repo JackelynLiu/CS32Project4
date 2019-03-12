@@ -28,6 +28,7 @@ private:
 		std::vector<Node*> children;
 	};
 	Node* root;
+	void findhelper(const std::string& key, bool exactMatchOnly, Node* current, std::vector<ValueType>& result) const;
 };
 
 template<typename ValueType>
@@ -74,7 +75,49 @@ void Trie<ValueType>::insert(const std::string& key, const ValueType& value)
 template<typename ValueType>
 std::vector<ValueType> Trie<ValueType>::find(const std::string& key, bool exactMatchOnly) const
 {
-	//for (int )
+	Node* current = root;
+	std::vector<ValueType> result;
+	int f = 0;
+	for (; f < root->children.size(); f++)
+	{
+		if (key[0] == current->children[f]->label)	//makes sure first one matches
+			break;
+	}
+	if (f == root->children.size()) return result;
+	else current = current->children[f];
+	findhelper(key.substr(1), exactMatchOnly, current, result);
+	return result;
+}
+
+template<typename ValueType>
+void Trie<ValueType>::findhelper(const std::string& key, bool exactMatchOnly, Node* current, std::vector<ValueType>& result) const
+{
+	if (key.size() == 0)
+	{
+		for (int i = 0; i < current->values.size(); i++)
+			result.push_back(current->values[i]);
+		return;
+	}
+	
+	Node* cur = current;
+	int currentvec_size = current->children.size();
+	int v = 0;
+	for (; v < currentvec_size; v++)
+	{
+		if (key[0] == current->children[v]->label)
+			break;
+	}
+	if (v == currentvec_size)			//does not find the letter
+	{
+		if (exactMatchOnly)
+			return;
+		else findhelper(key.substr(1), true, current->children[v], result);
+	}
+	else
+	{								//finds the letter
+		if (exactMatchOnly)
+			findhelper(key.substr(1), true, current->children[v], result);
+	}
 }
 
 
