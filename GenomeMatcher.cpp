@@ -15,9 +15,15 @@ public:
 	bool findGenomesWithThisDNA(const string& fragment, int minimumLength, bool exactMatchOnly, vector<DNAMatch>& matches) const;
 	bool findRelatedGenomes(const Genome& query, int fragmentMatchLength, bool exactMatchOnly, double matchPercentThreshold, vector<GenomeMatch>& results) const;
 private:
+	struct Loc2pos
+	{
+		Loc2pos(int l, int p) :m_loc(l), m_pos(p) {}
+		int m_loc, m_pos;
+	};
+
 	int m_minsearchlength;
 	vector<Genome> m_genomes;
-	Trie<string> m_trieofDNA;
+	Trie<Loc2pos> m_trieofDNA;
 };
 
 GenomeMatcherImpl::GenomeMatcherImpl(int minSearchLength)
@@ -31,7 +37,7 @@ void GenomeMatcherImpl::addGenome(const Genome& genome)
 	{
 		string s;
 		if(genome.extract(i, m_minsearchlength, s))
-			m_trieofDNA.insert(s, "(" + genome.name() + ", position " + to_string(i) + ")");
+			m_trieofDNA.insert(s, Loc2pos(m_genomes.size()-1, i));
 	}
 }
 
@@ -42,7 +48,37 @@ int GenomeMatcherImpl::minimumSearchLength() const
 
 bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minimumLength, bool exactMatchOnly, vector<DNAMatch>& matches) const
 {
-	return false;  // This compiles, but may not be correct
+	if (fragment.length() < minimumLength) return false;
+	if (minimumLength < m_minsearchlength) return false;
+
+	vector<Loc2pos> vec_of_poss = m_trieofDNA.find(fragment.substr(0, m_minsearchlength), exactMatchOnly);
+	
+	for (int i = 0; i < vec_of_poss.size(); i++)
+	{
+		string segmentOfGenome;
+		int locOfGenomeinArray = vec_of_poss[i].m_loc;
+		int posOfFragmentinGenome = vec_of_poss[i].m_pos;
+		int sizeOfRestOfGenome = m_genomes[locOfGenomeinArray].length() - posOfFragmentinGenome;
+		for (int addon = 0; addon < sizeOfRestOfGenome; addon++)
+		{
+			if (m_genomes[locOfGenomeinArray].extract(posOfFragmentinGenome, minimumLength, segmentOfGenome))
+			{
+				if (fragment.substr(0, segmentOfGenome.length()).compare(segmentOfGenome) == 0)
+				{
+					DNAMatch newlymatched;
+					newlymatched.genomeName = m_genomes[locOfGenomeinArray].name();
+					newlymatched.length = segmentOfGenome.size();
+					newlymatched.position = posOfFragmentinGenome;
+					matches.push_back(newlymatched);
+				}
+			}
+		}
+
+
+	}
+	
+	if (matches.empty()) return false;
+	return true;
 }
 
 bool GenomeMatcherImpl::findRelatedGenomes(const Genome& query, int fragmentMatchLength, bool exactMatchOnly, double matchPercentThreshold, vector<GenomeMatch>& results) const
