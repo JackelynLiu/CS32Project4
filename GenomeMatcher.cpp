@@ -24,6 +24,7 @@ private:
 	int m_minsearchlength;
 	vector<Genome> m_genomes;
 	Trie<Loc2pos> m_trieofDNA;
+	//void findGenomesWithThisDNAhelp(const string& fragment, int minimumLength, bool exactMatchOnly, vector<DNAMatch>& matches) const;
 };
 
 GenomeMatcherImpl::GenomeMatcherImpl(int minSearchLength)
@@ -51,7 +52,9 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 	if (fragment.length() < minimumLength) return false;
 	if (minimumLength < m_minsearchlength) return false;
 
-	vector<Loc2pos> vec_of_poss = m_trieofDNA.find(fragment.substr(0, m_minsearchlength), exactMatchOnly);
+	string tosearch = fragment.substr(0, m_minsearchlength);
+
+	vector<Loc2pos> vec_of_poss = m_trieofDNA.find(tosearch, exactMatchOnly);
 	
 	for (int i = 0; i < vec_of_poss.size(); i++)
 	{
@@ -59,9 +62,11 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 		int locOfGenomeinArray = vec_of_poss[i].m_loc;
 		int posOfFragmentinGenome = vec_of_poss[i].m_pos;
 		int sizeOfRestOfGenome = m_genomes[locOfGenomeinArray].length() - posOfFragmentinGenome;
+		
+
 		for (int addon = 0; addon < sizeOfRestOfGenome; addon++)
 		{
-			if (m_genomes[locOfGenomeinArray].extract(posOfFragmentinGenome, minimumLength, segmentOfGenome))
+			if (m_genomes[locOfGenomeinArray].extract(posOfFragmentinGenome, minimumLength + addon, segmentOfGenome))
 			{
 				if (fragment.substr(0, segmentOfGenome.length()).compare(segmentOfGenome) == 0)
 				{
@@ -80,6 +85,7 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 	if (matches.empty()) return false;
 	return true;
 }
+
 
 bool GenomeMatcherImpl::findRelatedGenomes(const Genome& query, int fragmentMatchLength, bool exactMatchOnly, double matchPercentThreshold, vector<GenomeMatch>& results) const
 {
