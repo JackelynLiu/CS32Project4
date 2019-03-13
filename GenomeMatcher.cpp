@@ -24,6 +24,7 @@ private:
 	int m_minsearchlength;
 	vector<Genome> m_genomes;
 	Trie<Loc2pos> m_trieofDNA;
+	int determineifExactMatchorSNiP(string first, string second) const;
 	//void findGenomesWithThisDNAhelp(const string& fragment, int minimumLength, bool exactMatchOnly, vector<DNAMatch>& matches) const;
 };
 
@@ -47,13 +48,29 @@ int GenomeMatcherImpl::minimumSearchLength() const
 	return m_minsearchlength;
 }
 
+int GenomeMatcherImpl::determineifExactMatchorSNiP(string first, string second) const
+{
+	if (first.compare(second) == 0) return 1;		//returns 1 if exact
+	bool mismatch_found = false;
+	if (first[0] != second[0]) return 0;			//returns 0 if neither
+	for (int i = 0; i < first.size(); i++)
+	{
+		if (first[i] != second[i])
+		{
+			if (mismatch_found)
+				return 0;
+			else mismatch_found = true;
+		}
+	}
+	return 2;						//returns 2 if SNiP
+}
+
 bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minimumLength, bool exactMatchOnly, vector<DNAMatch>& matches) const
 {
 	if (fragment.length() < minimumLength) return false;
 	if (minimumLength < m_minsearchlength) return false;
 
 	string tosearch = fragment.substr(0, m_minsearchlength);
-
 	vector<Loc2pos> vec_of_poss = m_trieofDNA.find(tosearch, exactMatchOnly);
 	
 	for (int i = 0; i < vec_of_poss.size(); i++)
@@ -63,12 +80,11 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 		int posOfFragmentinGenome = vec_of_poss[i].m_pos;
 		int sizeOfRestOfGenome = m_genomes[locOfGenomeinArray].length() - posOfFragmentinGenome;
 		
-
 		for (int addon = 0; addon < sizeOfRestOfGenome; addon++)
 		{
 			if (m_genomes[locOfGenomeinArray].extract(posOfFragmentinGenome, minimumLength + addon, segmentOfGenome))
 			{
-				if (fragment.substr(0, segmentOfGenome.length()).compare(segmentOfGenome) == 0)
+				if (determineifExactMatchorSNiP(fragment.substr(0, segmentOfGenome.length()),segmentOfGenome) == 1)
 				{
 					DNAMatch newlymatched;
 					newlymatched.genomeName = m_genomes[locOfGenomeinArray].name();
@@ -76,10 +92,18 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 					newlymatched.position = posOfFragmentinGenome;
 					matches.push_back(newlymatched);
 				}
+				else if (determineifExactMatchorSNiP(fragment.substr(0, segmentOfGenome.length()), segmentOfGenome) == 2
+					&& !exactMatchOnly)
+				{
+					DNAMatch newlymatched;
+					newlymatched.genomeName = m_genomes[locOfGenomeinArray].name();
+					newlymatched.length = segmentOfGenome.size();
+					newlymatched.position = posOfFragmentinGenome;
+					matches.push_back(newlymatched);
+				}
+
 			}
 		}
-
-
 	}
 	
 	if (matches.empty()) return false;
