@@ -120,7 +120,7 @@ void Trie<ValueType>::findhelper(const std::string& key, bool exactMatchOnly, No
 		{
 			if (!exactMatchOnly)
 				findhelper(key.substr(1), true, current->children[v], result);
-			else return;
+			else continue;
 		}
 		if (key[0] == current->children[v]->label)
 			findhelper(key.substr(1), exactMatchOnly, current->children[v], result);
