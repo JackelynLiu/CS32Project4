@@ -59,7 +59,8 @@ int GenomeMatcherImpl::determineifExactMatchorSNiP(string first, string second) 
 		{
 			if (mismatch_found)
 				return 0;
-			else mismatch_found = true;
+			else
+				mismatch_found = true;
 		}
 	}
 	return 2;						//returns 2 if SNiP
@@ -82,30 +83,43 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 		
 		for (int addon = 0; addon < sizeOfRestOfGenome; addon++)
 		{
-			if (m_genomes[locOfGenomeinArray].extract(posOfFragmentinGenome, minimumLength + addon, segmentOfGenome))
+			string segmentOfGenome;
+			if(m_genomes[locOfGenomeinArray].extract(posOfFragmentinGenome, minimumLength + addon, segmentOfGenome))
 			{
-				if (determineifExactMatchorSNiP(fragment.substr(0, segmentOfGenome.length()),segmentOfGenome) == 1)
+				if (segmentOfGenome.length() <= fragment.length())
 				{
-					DNAMatch newlymatched;
-					newlymatched.genomeName = m_genomes[locOfGenomeinArray].name();
-					newlymatched.length = segmentOfGenome.size();
-					newlymatched.position = posOfFragmentinGenome;
-					matches.push_back(newlymatched);
-				}
-				else if (determineifExactMatchorSNiP(fragment.substr(0, segmentOfGenome.length()), segmentOfGenome) == 2
-					&& !exactMatchOnly)
-				{
-					DNAMatch newlymatched;
-					newlymatched.genomeName = m_genomes[locOfGenomeinArray].name();
-					newlymatched.length = segmentOfGenome.size();
-					newlymatched.position = posOfFragmentinGenome;
-					matches.push_back(newlymatched);
+					int d = determineifExactMatchorSNiP(fragment.substr(0, segmentOfGenome.length()), segmentOfGenome);
+					if (d == 1 || (d==2 && !exactMatchOnly))
+					{
+						int m = 0;
+						for (; m < matches.size(); m++)
+						{
+							if (matches[m].genomeName == m_genomes[locOfGenomeinArray].name())
+								break;
+						}
+						if (m == matches.size())
+						{
+							DNAMatch newlymatched;
+							newlymatched.genomeName = m_genomes[locOfGenomeinArray].name();
+							newlymatched.length = segmentOfGenome.size();
+							newlymatched.position = posOfFragmentinGenome;
+							matches.push_back(newlymatched);
+						}
+						else
+						{
+							if (matches[m].length < segmentOfGenome.size())
+							{
+								matches[m].length = segmentOfGenome.size();
+								matches[m].position = posOfFragmentinGenome;
+							}
+						}
+					}
 				}
 
 			}
 		}
 	}
-	
+
 	if (matches.empty()) return false;
 	return true;
 }
