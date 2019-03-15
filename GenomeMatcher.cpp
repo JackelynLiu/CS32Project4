@@ -2,8 +2,10 @@
 #include "Trie.h"
 #include <string>
 #include <vector>
+#include <map>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 using namespace std;
 
 class GenomeMatcherImpl
@@ -124,10 +126,55 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 	return true;
 }
 
+bool comparepercents(const GenomeMatch &a, const GenomeMatch &b)
+{
+	if (a.percentMatch < b.percentMatch)
+		return true;
+	else return false;
+}
 
 bool GenomeMatcherImpl::findRelatedGenomes(const Genome& query, int fragmentMatchLength, bool exactMatchOnly, double matchPercentThreshold, vector<GenomeMatch>& results) const
 {
-	return false;  // This compiles, but may not be correct
+	if (fragmentMatchLength < m_minsearchlength) return false;
+
+	int num_sequences = query.length() / fragmentMatchLength;
+	
+	map <string, double> genome2match;
+
+	for (int i = 0; i < m_genomes.size(); i++)
+	{
+		genome2match[m_genomes[i].name()] = 0;
+	}
+	for (int i = 0; i < num_sequences; i++)
+	{
+		vector<DNAMatch> matches;
+		int startpos = i * fragmentMatchLength;
+		string extractedfromquery;
+		bool check1 = query.extract(startpos, fragmentMatchLength, extractedfromquery);
+		if (!check1) continue;
+		bool check2 = findGenomesWithThisDNA(extractedfromquery, fragmentMatchLength, exactMatchOnly, matches);
+		if (!check2) continue;
+		for (int j = 0; j < matches.size(); j++)
+		{
+			string genomename = matches[j].genomeName;
+			genome2match[genomename]++;
+		}
+	}
+
+	map<string, double>::iterator it = genome2match.begin();
+	for (; it != genome2match.end(); it++)
+	{
+		double percent = ((*it).second / num_sequences) * 100;
+		if (percent < matchPercentThreshold) continue;
+		GenomeMatch matchedgenome;
+		matchedgenome.genomeName = (*it).first;
+		matchedgenome.percentMatch = percent;
+		results.push_back(matchedgenome);
+	}
+
+	if (results.empty()) return false;
+	sort(results.begin(), results.end(), comparepercents);
+	return true;
 }
 
 //******************** GenomeMatcher functions ********************************
