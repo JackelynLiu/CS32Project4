@@ -86,38 +86,36 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 		for (int addon = 0; addon < sizeOfRestOfGenome; addon++)
 		{
 			string segmentOfGenome;
-			if(m_genomes[locOfGenomeinArray].extract(posOfFragmentinGenome, minimumLength + addon, segmentOfGenome))
+			bool check1 = m_genomes[locOfGenomeinArray].extract(posOfFragmentinGenome, minimumLength + addon, segmentOfGenome);
+			if (!check1) continue;
+			if (segmentOfGenome.length() <= fragment.length())
 			{
-				if (segmentOfGenome.length() <= fragment.length())
+				int d = determineifExactMatchorSNiP(fragment.substr(0, segmentOfGenome.length()), segmentOfGenome);
+				if (d == 1 || (d==2 && !exactMatchOnly))
 				{
-					int d = determineifExactMatchorSNiP(fragment.substr(0, segmentOfGenome.length()), segmentOfGenome);
-					if (d == 1 || (d==2 && !exactMatchOnly))
+					int m = 0;
+					for (; m < matches.size(); m++)
 					{
-						int m = 0;
-						for (; m < matches.size(); m++)
+						if (matches[m].genomeName == m_genomes[locOfGenomeinArray].name())
+							break;
+					}
+					if (m == matches.size())
+					{
+						DNAMatch newlymatched;
+						newlymatched.genomeName = m_genomes[locOfGenomeinArray].name();
+						newlymatched.length = segmentOfGenome.size();
+						newlymatched.position = posOfFragmentinGenome;
+						matches.push_back(newlymatched);
+					}
+					else
+					{
+						if (matches[m].length < segmentOfGenome.size())
 						{
-							if (matches[m].genomeName == m_genomes[locOfGenomeinArray].name())
-								break;
-						}
-						if (m == matches.size())
-						{
-							DNAMatch newlymatched;
-							newlymatched.genomeName = m_genomes[locOfGenomeinArray].name();
-							newlymatched.length = segmentOfGenome.size();
-							newlymatched.position = posOfFragmentinGenome;
-							matches.push_back(newlymatched);
-						}
-						else
-						{
-							if (matches[m].length < segmentOfGenome.size())
-							{
-								matches[m].length = segmentOfGenome.size();
-								matches[m].position = posOfFragmentinGenome;
-							}
+							matches[m].length = segmentOfGenome.size();
+							matches[m].position = posOfFragmentinGenome;
 						}
 					}
 				}
-
 			}
 		}
 	}
